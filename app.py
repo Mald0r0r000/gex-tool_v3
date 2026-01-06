@@ -350,6 +350,8 @@ def save_gex_snapshot(spot, call_wall, put_wall, zero_gamma, confidence):
     dm.save_snapshot(snapshot)
     return snapshot
 
+# SUITE DE app.py (PARTIE 2/2)
+
 # === INTERFACE STREAMLIT ===
 
 st.title("📊 GEX Master Pro v3.0")
@@ -357,38 +359,48 @@ st.caption("Real-time Gamma Exposure Analysis with Velocity Detection")
 
 # === SECTION 1 : STATUS & AUTO-FETCH ===
 dm = get_data_manager()
-
-col_status1, col_status2, col_status3 = st.columns([2, 1, 1])
-
-with col_status1:
-    last_update = dm.get_last_update_time()
-    if last_update:
-        time_ago = format_time_ago(last_update)
-        if (datetime.now() - last_update).total_seconds() < 3600:
-            st.success(f"📡 {time_ago}")
-        else:
-            st.warning(f"⚠️ {time_ago}")
-    else:
-        st.info("📡 Aucun historique - Premier calcul")
-
-with col_status2:
-    # Indicateur auto-fetch
-    if auto_fetch_check(dm, interval_minutes=60):
-        st.warning("🔄 Fetch recommandé")
-    else:
-        st.success("✅ À jour")
-
-with col_status3:
-    if st.button("🔄 Refresh", use_container_width=True):
-        st.cache_resource.clear()
-        st.rerun()
-
-# Stats rapides
 stats = dm.get_statistics()
+
+# Afficher seulement si historique existe
 if stats['total_snapshots'] > 0:
+    col_status1, col_status2, col_status3 = st.columns([2, 1, 1])
+
+    with col_status1:
+        last_update = dm.get_last_update_time()
+        if last_update:
+            time_ago = format_time_ago(last_update)
+            if (datetime.now() - last_update).total_seconds() < 3600:
+                st.success(f"📡 {time_ago}")
+            else:
+                st.warning(f"⚠️ {time_ago}")
+
+    with col_status2:
+        # Indicateur auto-fetch
+        if auto_fetch_check(dm, interval_minutes=60):
+            st.warning("🔄 Fetch recommandé")
+        else:
+            st.success("✅ À jour")
+
+    with col_status3:
+        if st.button("🔄 Refresh", use_container_width=True):
+            st.cache_resource.clear()
+            st.rerun()
+
+    # Stats rapides
     st.caption(f"📊 {stats['total_snapshots']} snapshots | "
               f"Durée : {stats['duration_hours']}h | "
               f"Intervalle moy : {stats['avg_update_interval']}min")
+else:
+    # Premier calcul
+    col_first1, col_first2 = st.columns([3, 1])
+    
+    with col_first1:
+        st.info("📡 Aucun historique - Premier calcul requis")
+    
+    with col_first2:
+        if st.button("🔄 Refresh", use_container_width=True):
+            st.cache_resource.clear()
+            st.rerun()
 
 st.divider()
 
