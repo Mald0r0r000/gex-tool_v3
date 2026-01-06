@@ -1,7 +1,7 @@
-streamlit>=1.28.0
-requests>=2.31.0
-pandas>=2.0.0
-numpy>=1.24.0,<2.0.0
-scipy>=1.10.0
-altair>=5.0.0
-python-dateutil>=2.8.0
+streamlit
+requests
+pandas
+numpy
+scipy
+altair
+python-dateutil
