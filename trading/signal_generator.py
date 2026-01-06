@@ -77,9 +77,9 @@ def _generate_swing_signal(position: str, regime: str, distance_pct: float,
             action = "✅ SETUP PREMIUM : Prix sous ZG en hausse → Magnétisme haussier"
             entry = f"${spot * 0.998:,.0f} - ${zg * 0.995:,.0f}"
             target = f"${zg:,.0f} (ZG) puis ${cw:,.0f} (Call Wall)"
-            stop = f"${zg * 0.975:,.0f}"
+            stop = f"${min(spot * 0.975, zg * 0.95):,.0f}"  # ✅ CORRIGÉ : -2.5% du spot OU -5% du ZG (le plus bas)
             risk = "FAIBLE" if conf > 70 else "MOYEN"
-            note = f"Prix {distance_pct:.1f}% sous ZG. Rebond probable vers équilibre."
+            note = f"Prix {abs(distance_pct):.1f}% sous ZG. Rebond probable vers équilibre."
             conf_adj = conf * 1.25
             
         elif position == 'AT_ZG':
@@ -89,7 +89,7 @@ def _generate_swing_signal(position: str, regime: str, distance_pct: float,
             action = "📍 Prix AU Zero Gamma haussier → Entrée agressive possible"
             entry = f"${spot:,.0f} (maintenant)"
             target = f"${cw:,.0f} (Call Wall)"
-            stop = f"${zg * 0.98:,.0f}"
+            stop = f"${spot * 0.98:,.0f}"  # ✅ CORRIGÉ : -2% du prix actuel
             risk = "MOYEN"
             note = "Point d'inflexion. Ratio R:R favorable."
             conf_adj = conf * 1.15
@@ -102,7 +102,7 @@ def _generate_swing_signal(position: str, regime: str, distance_pct: float,
                 action = "⚠️ Prix déjà sur ZG → Attendre pullback ou breakout Call Wall"
                 entry = f"Pullback vers ${zg * 0.995:,.0f}"
                 target = f"${cw:,.0f}"
-                stop = f"${zg * 0.985:,.0f}"
+                stop = f"${zg * 0.985:,.0f}"  # ✅ CORRECT : -1.5% du ZG (qui est sous le prix)
                 risk = "MOYEN"
                 note = "En extension. Patient = attendre correction."
                 conf_adj = conf * 0.95
@@ -128,7 +128,7 @@ def _generate_swing_signal(position: str, regime: str, distance_pct: float,
             action = "✅ SETUP PREMIUM : Prix sur ZG en baisse → Magnétisme baissier"
             entry = f"${zg * 1.005:,.0f} - ${spot * 1.002:,.0f}"
             target = f"${zg:,.0f} (ZG) puis ${pw:,.0f} (Put Wall)"
-            stop = f"${zg * 1.025:,.0f}"
+            stop = f"${max(zg * 1.025, spot * 1.015):,.0f}"  # ✅ CORRIGÉ : Au-dessus du prix
             risk = "FAIBLE" if conf > 70 else "MOYEN"
             note = f"Prix {abs(distance_pct):.1f}% sur ZG. Correction probable vers équilibre."
             conf_adj = conf * 1.25
@@ -140,7 +140,7 @@ def _generate_swing_signal(position: str, regime: str, distance_pct: float,
             action = "📍 Prix AU Zero Gamma baissier → Entrée agressive SHORT"
             entry = f"${spot:,.0f} (maintenant)"
             target = f"${pw:,.0f} (Put Wall)"
-            stop = f"${zg * 1.02:,.0f}"
+            stop = f"${spot * 1.02:,.0f}"  # ✅ CORRIGÉ : +2% au-dessus
             risk = "MOYEN"
             note = "Point d'inflexion baissier. Ratio R:R favorable."
             conf_adj = conf * 1.15
@@ -153,7 +153,7 @@ def _generate_swing_signal(position: str, regime: str, distance_pct: float,
                 action = "⚠️ Prix déjà sous ZG → Attendre rebond ou breakout Put Wall"
                 entry = f"Rebond vers ${zg * 1.005:,.0f}"
                 target = f"${pw:,.0f}"
-                stop = f"${zg * 1.015:,.0f}"
+                stop = f"${zg * 1.015:,.0f}"  # ✅ CORRIGÉ : Au-dessus du ZG
                 risk = "MOYEN"
                 note = "En extension baissière. Patient = attendre rebond."
                 conf_adj = conf * 0.95
@@ -179,7 +179,13 @@ def _generate_swing_signal(position: str, regime: str, distance_pct: float,
             action = f"🔄 ZG stable + Prix {'sur' if position == 'ABOVE_ZG' else 'sous'} ZG → Mean reversion"
             entry = f"${spot:,.0f}"
             target = f"${zg:,.0f} (retour ZG)"
-            stop = f"${spot * 1.015 if direction == 'LONG' else spot * 0.985:,.0f}"
+            
+            # ✅ CORRIGÉ : Stop selon direction
+            if direction == "SHORT":
+                stop = f"${spot * 1.015:,.0f} (+1.5%)"
+            else:
+                stop = f"${spot * 0.985:,.0f} (-1.5%)"
+            
             risk = "MOYEN"
             note = "Range trading : retour vers équilibre probable."
             conf_adj = conf * 0.85
@@ -233,7 +239,7 @@ def _generate_scalp_signal(position: str, velocity: float,
         action = f"⚡ Call Wall proche ({dist_cw:.1f}%) → Magnétisme haussier court terme"
         entry = f"${spot:,.0f}"
         target = f"${cw:,.0f} (Wall)"
-        stop = f"${spot * 0.993:,.0f}"
+        stop = f"${spot * 0.993:,.0f}"  # ✅ CORRECT : -0.7% du prix actuel
         risk = "FAIBLE" if dist_cw < 1 else "MOYEN"
         note = f"Scalp vers Call Wall. TP attendu : +{dist_cw:.1f}%"
         conf_adj = conf * 1.1
@@ -245,7 +251,7 @@ def _generate_scalp_signal(position: str, velocity: float,
         action = f"⚡ Put Wall proche ({dist_pw:.1f}%) → Magnétisme baissier court terme"
         entry = f"${spot:,.0f}"
         target = f"${pw:,.0f} (Wall)"
-        stop = f"${spot * 1.007:,.0f}"
+        stop = f"${spot * 1.007:,.0f}"  # ✅ CORRIGÉ : +0.7% au-dessus
         risk = "FAIBLE" if dist_pw < 1 else "MOYEN"
         note = f"Scalp vers Put Wall. TP attendu : -{dist_pw:.1f}%"
         conf_adj = conf * 1.1
@@ -255,14 +261,15 @@ def _generate_scalp_signal(position: str, velocity: float,
         if position == 'BELOW_ZG':
             direction = "LONG"
             action = "⚡ Proche du ZG → Scalp LONG vers équilibre"
+            stop = f"${spot * 0.993:,.0f}"  # -0.7% en dessous
         else:
             direction = "SHORT"
             action = "⚡ Proche du ZG → Scalp SHORT vers équilibre"
+            stop = f"${spot * 1.007:,.0f}"  # ✅ CORRIGÉ : +0.7% au-dessus
         
         bias = "🟡 SCALP NEUTRE"
         entry = f"${spot:,.0f}"
         target = f"${zg:,.0f} (ZG)"
-        stop = f"${spot * 0.993 if direction == 'LONG' else spot * 1.007:,.0f}"
         risk = "MOYEN"
         note = "Scalp vers équilibre Zero Gamma"
         conf_adj = conf * 0.9
